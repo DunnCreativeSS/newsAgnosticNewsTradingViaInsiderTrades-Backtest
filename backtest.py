@@ -92,7 +92,8 @@ for day, group in agg:
     for d in disposed:
         if disposed[d]['v'] > ad * 4:
             adjd[d] = {'price': disposed[d]['price'],'c': disposed[a]['c'], 'v': disposed[d]['v']}
-            
+print(adja)
+print(adjd)
 class Strategy(bt.SignalStrategy):
     def __init__(self):
         print('a')
