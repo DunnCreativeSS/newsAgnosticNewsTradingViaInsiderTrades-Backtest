@@ -86,11 +86,11 @@ for day, group in agg:
     aa = ta / ca
     ad = td / cd 
     for a in acquired:
-        if acquired[a]['v'] > aa * 4:
+        if acquired[a]['v'] > aa * 4 and acquired[a]['c'] > 3:
             adja[a] = {'price': acquired[a]['price'], 'c': acquired[a]['c'], 'v': acquired[a]['v']}
             
     for d in disposed:
-        if disposed[d]['v'] > ad * 4:
+        if disposed[d]['v'] > ad * 4 and disposed[d]['c'] > 3:
             adjd[d] = {'price': disposed[d]['price'],'c': disposed[d]['c'], 'v': disposed[d]['v']}
 for a in adja:
     print(adja[a]['c'])
