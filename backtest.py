@@ -59,10 +59,10 @@ for day, group in agg:
     disposed = {}
     count = 0
     for s in sym:
-        s != 'DHCP' and s != 'FMSA'and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
+        if s != 'DHCP' and s != 'FMSA'and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
 
-        acquired[s + ':' + datep] = {'v': 0}
-        disposed[s + ':' + datep] = {'v': 0}
+            acquired[s + ':' + datep] = {'v': 0}
+            disposed[s + ':' + datep] = {'v': 0}
     for s in sym:
         if aord[count] == "A":
             if float(value[count]) is not 0:
