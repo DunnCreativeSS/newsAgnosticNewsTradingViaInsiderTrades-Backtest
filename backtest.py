@@ -1,0 +1,131 @@
+import pandas as pd
+import requests
+import urllib
+from urllib.parse import urlsplit, parse_qs
+from bs4 import BeautifulSoup
+import datetime as dt
+import json
+import time
+from datetime import datetime
+import backtrader as bt
+import backtrader
+
+
+URL = "http://www.insider-sleuth.com/insider/screener"
+session = requests.session()
+r1 = session.get(URL)
+soup1 = BeautifulSoup(r1.text, "html.parser")
+
+value1 = soup1.find('input', {'name': 'csrfmiddlewaretoken'}).get('value')
+print(value1)
+data = "csrfmiddlewaretoken=" + value1 + "&startDate=01%2F01%2F2019&endDate=06%2F16%2F2019&symbol=&min_val=&max_val=&aq_disp=Both&sorting=Date&officerTitle=+&isOfficer=+&isDirector=+"
+
+params = parse_qs(data)
+data2 = dict(params)
+headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/54.0.2840.90 Safari/537.36'}
+
+r = session.post(URL, data=data2, headers=headers)
+soup = BeautifulSoup(r.text, "html.parser")
+l = []
+table = soup.find('table')
+table_rows = table.find_all('tr')
+
+
+for tr in table_rows:
+    td = tr.find_all('td')
+    row = [tr.text for tr in td]
+    l.append(row)
+df = pd.DataFrame(l, columns=["Date", "Issuer Name", "Issuer Trading Symbol", "Rpt Owner Name", "Officer Title", "Acquired Disposed Code", "Transaction Shares", "Price per Share", "Value Transacted"])
+df['Date'] = df['Date'].apply(pd.to_datetime)
+df = df.set_index(df['Date'])
+per = df['Date'].dt.to_period("D")
+agg = df.groupby([per])
+dfile = 'rg_unificado.csv'
+dfs = {}
+done = []
+adja = {}
+adjd = {}
+for day, group in agg:
+    #this simple save the data
+    datep =  str(day)
+    filename = '%s_%s.csv' % (dfile.replace('.csv', ''), datep)
+    group.to_csv(filename, sep=',', quotechar='"', encoding='latin-1', index=False, header=True)
+    dfs[filename] = pd.read_csv(filename) 
+    sym = dfs[filename]['Issuer Trading Symbol'].values
+    value = dfs[filename]['Value Transacted'].values
+    aord = dfs[filename]['Acquired Disposed Code'].values
+    price = dfs[filename]["Price per Share"].values
+    acquired = {}
+    disposed = {}
+    count = 0
+    for s in sym:
+        acquired[s + ':' + datep] = {'v': 0}
+        disposed[s + ':' + datep] = {'v': 0}
+    for s in sym:
+        if aord[count] == "A":
+            if float(value[count]) is not 0:
+                acquired[s + ':' + datep] = {'price': price[count], 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
+        else:
+            if float(value[count]) is not 0:
+                disposed[s + ':' + datep] = {'price': price[count], 'v': disposed[s + ':' + datep]['v'] + float(value[count])}
+    count = count + 1
+    ta = 0
+    ca = 0
+    td = 0
+    cd = 0
+    for a in acquired:
+        ta = ta + acquired[a]['v']
+        ca = ca + 1
+    for d in disposed:
+        td = td + disposed[d]['v']
+        cd = cd + 1
+    aa = ta / ca
+    ad = td / cd 
+    for a in acquired:
+        if acquired[a]['v'] > aa * 4:
+            adja[a] = {'price': acquired[a]['price'], 'v': acquired[a]['v']}
+            
+    for d in disposed:
+        if disposed[d]['v'] > ad * 4:
+            adjd[d] = {'price': disposed[d]['price'], 'v': disposed[d]['v']}
+            
+class Strategy(bt.SignalStrategy):
+    def __init__(self):
+        print('a')
+    def next(self):
+        curdate = str(self.datetime.date(ago=0))
+        print(curdate)
+        print(cerebro.broker.getvalue())
+        for da in self.getdatanames():
+            #self.getdatabyname(da)
+            for a in adja:
+                if a.split(':')[0] == da:
+                    if curdate == a.split(':')[1]:
+                        self.buy(size=float(cerebro.broker.getvalue())/10/float(adja[a]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.03)
+            for d in adjd:
+                if d.split(':')[0] == da:
+                    if curdate == d.split(':')[1]:
+                        self.sell(size=float(cerebro.broker.getvalue())/10/float(adjd[d]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.03)
+
+cerebro = bt.Cerebro()
+cerebro.addstrategy(Strategy)
+
+for d in adjd:
+    if d not in done and d.split(':')[0] is not 'DHCP' and  d.split(':')[0] is not 'BLMT' and  d.split(':')[0] is not 'ipas' and  d.split(':')[0] is not '(CALX)' and  d.split(':')[0] is not '(SIRI)' and  d.split(':')[0] is not 'QTM' and  d.split(':')[0] is not 'IMDZ':
+        done.append(d)
+
+for a in adja:
+    if a not in done and a.split(':')[0] is not 'DHCP' and  a.split(':')[0] is not 'BLMT' and  a.split(':')[0] is not 'ipas' and a.split(':')[0] is not '(CALX)' and  a.split(':')[0] is not '(SIRI)' and  a.split(':')[0] is not 'QTM' and  a.split(':')[0] is not 'IMDZ':
+        done.append(a)
+datadata = {}
+for d in done:
+    datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2019, 1, 1),
+                                  todate=datetime(2019, 6, 16))
+for d in datadata:
+    cerebro.adddata(datadata[d])
+cerebro.broker.setcash(10000.0)
+start = cerebro.broker.getvalue()
+cerebro.run()
+print('Start portfolio value: %.2f' % start)
+print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
+
