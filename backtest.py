@@ -88,44 +88,16 @@ for day, group in agg:
     aa = ta / ca
     ad = td / cd 
     for a in acquired:
-        if acquired[a]['v'] > aa * 4 and acquired[a]['c'] > 3:
+        if acquired[a]['v'] > aa * 4 and acquired[a]['c'] > 1:
             adja[a] = {'price': acquired[a]['price'], 'c': acquired[a]['c'], 'v': acquired[a]['v']}
             
     for d in disposed:
-        if disposed[d]['v'] > ad * 4 and disposed[d]['c'] > 3:
+        if disposed[d]['v'] > ad * 4 and disposed[d]['c'] > 1:
             adjd[d] = {'price': disposed[d]['price'],'c': disposed[d]['c'], 'v': disposed[d]['v']}
 for a in adja:
     print(adja[a]['c'])
 for d in adjd:
     print(adjd[d]['c'])
-class exampleSizer(bt.Sizer):
-    params = (('size',1),)
-    def _getsizing(self, comminfo, cash, data, isbuy):
-        return self.p.size
-
-class printSizingParams(bt.Sizer):
-    '''
-    Prints the sizing parameters and values returned from class methods.
-    '''
-    def _getsizing(self, comminfo, cash, data, isbuy):
-        #Strategy Method example
-        pos = self.strategy.getposition(data)
-        #Broker Methods example
-        acc_value = self.broker.getvalue()
-
-        #Print results
-        print('----------- SIZING INFO START -----------')
-        print('--- Strategy method example')
-        print(pos)
-        print('--- Broker method example')
-        print('Account Value: {}'.format(acc_value))
-        print('--- Param Values')
-        print('Cash: {}'.format(cash))
-        print('isbuy??: {}'.format(isbuy))
-        print('data[0]: {}'.format(data[0]))
-        print('------------ SIZING INFO END------------')
-
-        return 0
 
 class maxRiskSizer(bt.Sizer):
     '''
@@ -164,17 +136,17 @@ class Strategy(bt.SignalStrategy):
                             if curdate == a.split(':')[1]:
                                 print(adja[a]['c'])
                                 print(((float(cerebro.broker.getvalue()) /100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c']))
-                                self.buy(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.1)
+                                self.buy(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.05)
                     for d in adjd:
                         if d.split(':')[0] == da:
                             if curdate == d.split(':')[1]:
                                 print(adjd[d]['c'])
                                 print(((float(cerebro.broker.getvalue()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c']))
-                                self.sell(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.1)
+                                self.sell(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.05)
                 
 cerebro = bt.Cerebro()
 cerebro.addstrategy(Strategy)
-cerebro.addsizer(maxRiskSizer, risk=0.1)
+cerebro.addsizer(maxRiskSizer, risk=0.05)
 
 for d in adjd:
     if d not in done:
@@ -186,7 +158,7 @@ for a in adja:
 datadata = {}
 for d in done:
     datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2017, 1, 1),
-                                  todate=datetime(2019, 6, 6))
+                                  todate=datetime(2019, 5, 31))
 for d in datadata:
     cerebro.adddata(datadata[d])
 cerebro.broker.setcash(10000.0)
