@@ -59,12 +59,12 @@ for day, group in agg:
     disposed = {}
     count = 0
     for s in sym:
-        if s != 'DHCP' and s != 'FMSA'and s != 'OMED'and s != 'COTV' and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
+        if s != 'DHCP'  and s != 'GXP'and s != 'LBC'  and s != 'FMSA'and s != 'COTV'and s != 'OMED' and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
 
             acquired[s + ':' + datep] = {'v': 0, 'c': 0}
             disposed[s + ':' + datep] = {'v': 0, 'c': 0}
     for s in sym:
-        if s != 'DHCP' and s != 'FMSA' and s != 'OMED' and s != 'COTV' and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
+        if s != 'DHCP' and s != 'GXP' and s != 'LBC' and s != 'FMSA'and s != 'COTV'and s != 'OMED' and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
 
             if aord[count] == "A":
                 if float(value[count]) is not 0:
@@ -96,6 +96,54 @@ for a in adja:
     print(adja[a]['c'])
 for d in adjd:
     print(adjd[d]['c'])
+class exampleSizer(bt.Sizer):
+    params = (('size',1),)
+    def _getsizing(self, comminfo, cash, data, isbuy):
+        return self.p.size
+
+class printSizingParams(bt.Sizer):
+    '''
+    Prints the sizing parameters and values returned from class methods.
+    '''
+    def _getsizing(self, comminfo, cash, data, isbuy):
+        #Strategy Method example
+        pos = self.strategy.getposition(data)
+        #Broker Methods example
+        acc_value = self.broker.getvalue()
+
+        #Print results
+        print('----------- SIZING INFO START -----------')
+        print('--- Strategy method example')
+        print(pos)
+        print('--- Broker method example')
+        print('Account Value: {}'.format(acc_value))
+        print('--- Param Values')
+        print('Cash: {}'.format(cash))
+        print('isbuy??: {}'.format(isbuy))
+        print('data[0]: {}'.format(data[0]))
+        print('------------ SIZING INFO END------------')
+
+        return 0
+
+class maxRiskSizer(bt.Sizer):
+    '''
+    Returns the number of shares rounded down that can be purchased for the
+    max rish tolerance
+    '''
+    params = (('risk', 0.03),)
+
+    def __init__(self):
+        if self.p.risk > 1 or self.p.risk < 0:
+            raise ValueError('The risk parameter is a percentage which must be'
+                'entered as a float. e.g. 0.5')
+
+    def _getsizing(self, comminfo, cash, data, isbuy):
+        if isbuy == True:
+            size = math.floor((cash * self.p.risk) / data[0])
+        else:
+            size = math.floor((cash * self.p.risk) / data[0]) * -1
+        return size
+
 class Strategy(bt.SignalStrategy):
     def __init__(self):
         self.index = 0
@@ -104,24 +152,27 @@ class Strategy(bt.SignalStrategy):
         if self.index > 0:
             curdate = str(self.datetime.date(ago=0))
             print(curdate)
-            print(cerebro.broker.getcash())
-            for da in self.getdatanames():
+            print(cerebro.broker.getvalue())
+            if cerebro.broker.getvalue() > 0:
+                
+                for da in self.getdatanames():
                 #self.getdatabyname(da)
-                for a in adja:
-                    if a.split(':')[0] == da:
-                        if curdate == a.split(':')[1]:
-                            print(adja[a]['c'])
-                            print(((float(cerebro.broker.getcash()) / 100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c']))
-                            self.buy(size=(((float(cerebro.broker.getcash()) / 100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
-                for d in adjd:
-                    if d.split(':')[0] == da:
-                        if curdate == d.split(':')[1]:
-                            print(adjd[d]['c'])
-                            print(((float(cerebro.broker.getcash()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c']))
-                            self.sell(size=(((float(cerebro.broker.getcash()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
-
+                    for a in adja:
+                        if a.split(':')[0] == da:
+                            if curdate == a.split(':')[1]:
+                                print(adja[a]['c'])
+                                print(((float(cerebro.broker.getvalue()) /100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c']))
+                                self.buy(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.1)
+                    for d in adjd:
+                        if d.split(':')[0] == da:
+                            if curdate == d.split(':')[1]:
+                                print(adjd[d]['c'])
+                                print(((float(cerebro.broker.getvalue()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c']))
+                                self.sell(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.1)
+                
 cerebro = bt.Cerebro()
 cerebro.addstrategy(Strategy)
+cerebro.addsizer(maxRiskSizer, risk=0.1)
 
 for d in adjd:
     if d not in done:
