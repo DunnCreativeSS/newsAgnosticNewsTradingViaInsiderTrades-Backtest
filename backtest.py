@@ -68,10 +68,10 @@ for day, group in agg:
 
             if aord[count] == "A":
                 if float(value[count]) is not 0:
-                    acquired[s + ':' + datep] = {'price': price[count], 'c': : acquired[s + ':' + datep]['c'] + 1, 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
+                    acquired[s + ':' + datep] = {'price': price[count], 'c':  acquired[s + ':' + datep]['c'] + 1, 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
             else:
                 if float(value[count]) is not 0:
-                    disposed[s + ':' + datep] = {'price': price[count], 'c': : disposed[s + ':' + datep]['c'] + 1,  'v': disposed[s + ':' + datep]['v'] + float(value[count])}
+                    disposed[s + ':' + datep] = {'price': price[count], 'c':  disposed[s + ':' + datep]['c'] + 1,  'v': disposed[s + ':' + datep]['v'] + float(value[count])}
     count = count + 1
     ta = 0
     ca = 0
