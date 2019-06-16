@@ -18,7 +18,7 @@ soup1 = BeautifulSoup(r1.text, "html.parser")
 
 value1 = soup1.find('input', {'name': 'csrfmiddlewaretoken'}).get('value')
 print(value1)
-data = "csrfmiddlewaretoken=" + value1 + "&startDate=01%2F01%2F2017&endDate=06%2F06%2F2019&symbol=&min_val=&max_val=&aq_disp=Both&sorting=Date&officerTitle=+&isOfficer=+&isDirector=+"
+data = "csrfmiddlewaretoken=" + value1 + "&startDate=01%2F01%2F2018&endDate=01%2F01%2F2019&symbol=&min_val=&max_val=&aq_disp=Both&sorting=Date&officerTitle=+&isOfficer=+&isDirector=+"
 
 params = parse_qs(data)
 data2 = dict(params)
@@ -100,7 +100,7 @@ class Strategy(bt.SignalStrategy):
     def __init__(self):
         print('a')
     def next(self):
-        curdate = str(self.datetime.date(ago=0))
+        curdate = str(self.datetime.date(ago=2))
         print(curdate)
         print(cerebro.broker.getcash())
         for da in self.getdatanames():
@@ -130,8 +130,8 @@ for a in adja:
         done.append(a)
 datadata = {}
 for d in done:
-    datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2017, 1, 1),
-                                  todate=datetime(2019, 6, 6))
+    datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2018, 1, 1),
+                                  todate=datetime(2019, 1, 1))
 for d in datadata:
     cerebro.adddata(datadata[d])
 cerebro.broker.setcash(10000.0)
