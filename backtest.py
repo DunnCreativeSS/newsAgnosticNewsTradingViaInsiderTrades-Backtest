@@ -98,25 +98,27 @@ for d in adjd:
     print(adjd[d]['c'])
 class Strategy(bt.SignalStrategy):
     def __init__(self):
-        print('a')
+        self.index = 0
     def next(self):
-        curdate = str(self.datetime.date(ago=2))
-        print(curdate)
-        print(cerebro.broker.getcash())
-        for da in self.getdatanames():
-            #self.getdatabyname(da)
-            for a in adja:
-                if a.split(':')[0] == da:
-                    if curdate == a.split(':')[1]:
-                        print(adja[a]['c'])
-                        print(((float(cerebro.broker.getcash()) / 100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c']))
-                        self.buy(size=(((float(cerebro.broker.getcash()) / 100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
-            for d in adjd:
-                if d.split(':')[0] == da:
-                    if curdate == d.split(':')[1]:
-                        print(adjd[d]['c'])
-                        print(((float(cerebro.broker.getcash()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c']))
-                        self.sell(size=(((float(cerebro.broker.getcash()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
+        self.index = self.index + 1
+        if index > 2:
+            curdate = str(self.datetime.date(ago=2))
+            print(curdate)
+            print(cerebro.broker.getcash())
+            for da in self.getdatanames():
+                #self.getdatabyname(da)
+                for a in adja:
+                    if a.split(':')[0] == da:
+                        if curdate == a.split(':')[1]:
+                            print(adja[a]['c'])
+                            print(((float(cerebro.broker.getcash()) / 100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c']))
+                            self.buy(size=(((float(cerebro.broker.getcash()) / 100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
+                for d in adjd:
+                    if d.split(':')[0] == da:
+                        if curdate == d.split(':')[1]:
+                            print(adjd[d]['c'])
+                            print(((float(cerebro.broker.getcash()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c']))
+                            self.sell(size=(((float(cerebro.broker.getcash()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
 
 cerebro = bt.Cerebro()
 cerebro.addstrategy(Strategy)
