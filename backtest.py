@@ -61,17 +61,17 @@ for day, group in agg:
     for s in sym:
         if s != 'DHCP' and s != 'FMSA'and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
 
-            acquired[s + ':' + datep] = {'v': 0}
-            disposed[s + ':' + datep] = {'v': 0}
+            acquired[s + ':' + datep] = {'v': 0, 'c': 0}
+            disposed[s + ':' + datep] = {'v': 0, 'c': 0}
     for s in sym:
         if s != 'DHCP' and s != 'FMSA'and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
 
             if aord[count] == "A":
                 if float(value[count]) is not 0:
-                    acquired[s + ':' + datep] = {'price': price[count], 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
+                    acquired[s + ':' + datep] = {'price': price[count], 'c': : acquired[s + ':' + datep]['c'] + 1, 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
             else:
                 if float(value[count]) is not 0:
-                    disposed[s + ':' + datep] = {'price': price[count], 'v': disposed[s + ':' + datep]['v'] + float(value[count])}
+                    disposed[s + ':' + datep] = {'price': price[count], 'c': : disposed[s + ':' + datep]['c'] + 1,  'v': disposed[s + ':' + datep]['v'] + float(value[count])}
     count = count + 1
     ta = 0
     ca = 0
@@ -87,11 +87,11 @@ for day, group in agg:
     ad = td / cd 
     for a in acquired:
         if acquired[a]['v'] > aa * 4:
-            adja[a] = {'price': acquired[a]['price'], 'v': acquired[a]['v']}
+            adja[a] = {'price': acquired[a]['price'], 'c': acquired[a]['c'], 'v': acquired[a]['v']}
             
     for d in disposed:
         if disposed[d]['v'] > ad * 4:
-            adjd[d] = {'price': disposed[d]['price'], 'v': disposed[d]['v']}
+            adjd[d] = {'price': disposed[d]['price'],'c': disposed[a]['c'], 'v': disposed[d]['v']}
             
 class Strategy(bt.SignalStrategy):
     def __init__(self):
@@ -105,11 +105,11 @@ class Strategy(bt.SignalStrategy):
             for a in adja:
                 if a.split(':')[0] == da:
                     if curdate == a.split(':')[1]:
-                        self.buy(size=float(cerebro.broker.getvalue())/10/float(adja[a]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
+                        self.buy(size=float(cerebro.broker.getvalue())/(1/(1 * adja[a]['c'])/float(adja[a]['price'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
             for d in adjd:
                 if d.split(':')[0] == da:
                     if curdate == d.split(':')[1]:
-                        self.sell(size=float(cerebro.broker.getvalue())/10/float(adjd[d]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
+                        self.sell(size=float(cerebro.broker.getvalue())/(1/(1 * adjd[d]['c'])/float(adjd[d]['price'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
 
 cerebro = bt.Cerebro()
 cerebro.addstrategy(Strategy)
