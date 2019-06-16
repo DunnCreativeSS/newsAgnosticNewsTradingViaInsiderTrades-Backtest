@@ -64,12 +64,14 @@ for day, group in agg:
             acquired[s + ':' + datep] = {'v': 0}
             disposed[s + ':' + datep] = {'v': 0}
     for s in sym:
-        if aord[count] == "A":
-            if float(value[count]) is not 0:
-                acquired[s + ':' + datep] = {'price': price[count], 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
-        else:
-            if float(value[count]) is not 0:
-                disposed[s + ':' + datep] = {'price': price[count], 'v': disposed[s + ':' + datep]['v'] + float(value[count])}
+        if s != 'DHCP' and s != 'FMSA'and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
+
+            if aord[count] == "A":
+                if float(value[count]) is not 0:
+                    acquired[s + ':' + datep] = {'price': price[count], 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
+            else:
+                if float(value[count]) is not 0:
+                    disposed[s + ':' + datep] = {'price': price[count], 'v': disposed[s + ':' + datep]['v'] + float(value[count])}
     count = count + 1
     ta = 0
     ca = 0
