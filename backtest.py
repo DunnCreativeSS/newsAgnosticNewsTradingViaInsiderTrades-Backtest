@@ -59,6 +59,8 @@ for day, group in agg:
     disposed = {}
     count = 0
     for s in sym:
+        s != 'DHCP' and s != 'FMSA'and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
+
         acquired[s + ':' + datep] = {'v': 0}
         disposed[s + ':' + datep] = {'v': 0}
     for s in sym:
@@ -111,11 +113,11 @@ cerebro = bt.Cerebro()
 cerebro.addstrategy(Strategy)
 
 for d in adjd:
-    if d not in done and d.split(':')[0] != 'DHCP' and a.split(':')[0] != 'FMSA'and a.split(':')[0] !='ANCX'and a.split(':')[0] !='CCT'and a.split(':')[0] != 'HEI, HEI.A'and a.split(':')[0] !=  'IDTI' and a.split(':')[0] != 'P' and d.split(':')[0] != 'TSRO'and d.split(':')[0] != 'IVTY'and d.split(':')[0] != 'FMI'and d.split(':')[0] != 'ECYT' and  d.split(':')[0] != 'BLMT' and  d.split(':')[0] != 'ipas' and  d.split(':')[0] != '(CALX)' and  d.split(':')[0] != '(SIRI)' and  d.split(':')[0] != 'QTM' and  d.split(':')[0] != 'IMDZ':
+    if d not in done:
         done.append(d)
 
 for a in adja:
-    if a not in done and a.split(':')[0] != 'DHCP' and a.split(':')[0] !='FMSA'and a.split(':')[0] !='ANCX' and a.split(':')[0] !='CCT'and a.split(':')[0] !='HEI, HEI.A'and a.split(':')[0] != 'IDTI' and a.split(':')[0] !='P' and a.split(':')[0] != 'TSRO'and a.split(':')[0] != 'IVTY'and a.split(':')[0] != 'FMI'and a.split(':')[0] != 'ECYT'and  a.split(':')[0] != 'BLMT' and  a.split(':')[0] != 'ipas' and a.split(':')[0] != '(CALX)' and  a.split(':')[0] != '(SIRI)' and  a.split(':')[0] != 'QTM' and  a.split(':')[0] != 'IMDZ':
+    if a not in done:
         done.append(a)
 datadata = {}
 for d in done:
