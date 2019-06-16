@@ -18,7 +18,7 @@ soup1 = BeautifulSoup(r1.text, "html.parser")
 
 value1 = soup1.find('input', {'name': 'csrfmiddlewaretoken'}).get('value')
 print(value1)
-data = "csrfmiddlewaretoken=" + value1 + "&startDate=01%2F01%2F2019&endDate=06%2F16%2F2019&symbol=&min_val=&max_val=&aq_disp=Both&sorting=Date&officerTitle=+&isOfficer=+&isDirector=+"
+data = "csrfmiddlewaretoken=" + value1 + "&startDate=01%2F01%2F2018&endDate=01%2F01%2F2019&symbol=&min_val=&max_val=&aq_disp=Both&sorting=Date&officerTitle=+&isOfficer=+&isDirector=+"
 
 params = parse_qs(data)
 data2 = dict(params)
@@ -101,26 +101,26 @@ class Strategy(bt.SignalStrategy):
             for a in adja:
                 if a.split(':')[0] == da:
                     if curdate == a.split(':')[1]:
-                        self.buy(size=float(cerebro.broker.getvalue())/10/float(adja[a]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.03)
+                        self.buy(size=float(cerebro.broker.getvalue())/10/float(adja[a]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
             for d in adjd:
                 if d.split(':')[0] == da:
                     if curdate == d.split(':')[1]:
-                        self.sell(size=float(cerebro.broker.getvalue())/10/float(adjd[d]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.03)
+                        self.sell(size=float(cerebro.broker.getvalue())/10/float(adjd[d]['price']),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
 
 cerebro = bt.Cerebro()
 cerebro.addstrategy(Strategy)
 
 for d in adjd:
-    if d not in done and d.split(':')[0] is not 'DHCP' and  d.split(':')[0] is not 'BLMT' and  d.split(':')[0] is not 'ipas' and  d.split(':')[0] is not '(CALX)' and  d.split(':')[0] is not '(SIRI)' and  d.split(':')[0] is not 'QTM' and  d.split(':')[0] is not 'IMDZ':
+    if d not in done and d.split(':')[0] != 'DHCP' and a.split(':')[0] != 'DHCP''FMSA' and d.split(':')[0] != 'TSRO'and d.split(':')[0] != 'IVTY'and d.split(':')[0] != 'FMI'and d.split(':')[0] != 'ECYT' and  d.split(':')[0] != 'BLMT' and  d.split(':')[0] != 'ipas' and  d.split(':')[0] != '(CALX)' and  d.split(':')[0] != '(SIRI)' and  d.split(':')[0] != 'QTM' and  d.split(':')[0] != 'IMDZ':
         done.append(d)
 
 for a in adja:
-    if a not in done and a.split(':')[0] is not 'DHCP' and  a.split(':')[0] is not 'BLMT' and  a.split(':')[0] is not 'ipas' and a.split(':')[0] is not '(CALX)' and  a.split(':')[0] is not '(SIRI)' and  a.split(':')[0] is not 'QTM' and  a.split(':')[0] is not 'IMDZ':
+    if a not in done and a.split(':')[0] != 'DHCP' and a.split(':')[0] != 'DHCP''FMSA' and a.split(':')[0] != 'TSRO'and a.split(':')[0] != 'IVTY'and a.split(':')[0] != 'FMI'and a.split(':')[0] != 'ECYT'and  a.split(':')[0] != 'BLMT' and  a.split(':')[0] != 'ipas' and a.split(':')[0] != '(CALX)' and  a.split(':')[0] != '(SIRI)' and  a.split(':')[0] != 'QTM' and  a.split(':')[0] != 'IMDZ':
         done.append(a)
 datadata = {}
 for d in done:
-    datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2019, 1, 1),
-                                  todate=datetime(2019, 6, 16))
+    datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2018, 1, 1),
+                                  todate=datetime(2019, 1, 1))
 for d in datadata:
     cerebro.adddata(datadata[d])
 cerebro.broker.setcash(10000.0)
