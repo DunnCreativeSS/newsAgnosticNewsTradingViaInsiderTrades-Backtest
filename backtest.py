@@ -109,7 +109,6 @@ class Strategy(bt.SignalStrategy):
                 if a.split(':')[0] == da:
                     if curdate == a.split(':')[1]:
                         print(adja[a]['c'])
-                        ((bal/10)/(c*price)/(1/c))*c
                         print(((float(cerebro.broker.getvalue()) / 100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c']))
                         self.buy(size=(((float(cerebro.broker.getvalue()) / 10)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c'])),data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.075)
             for d in adjd:
