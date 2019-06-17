@@ -202,7 +202,7 @@ while True:
     orders = []
     tick = 0
     from yahoofinancials import YahooFinancials
-    for d in done:
+    for d in adjd:
         if d not in orders:
             # Create an order ID which is 'global' for this session. This
             # will need incrementing once new orders are submitted.
@@ -216,12 +216,36 @@ while True:
 
             p= (p[d.split(':')[0]]['regularMarketPrice'])
             # Go long 100 shares of Google
-            amt = cashbal / 1000 / p
+            amt = int(float(cashbal)) / 1000 / p
             amt = int(amt)
-            goog_order = create_order('TRAIL', amt, 'BUY')
-            goog_order.m_training_stop_percent = 0.1
-            time.sleep(100)    
-            orders.push(d)
+            goog_order = create_order('TRAIL', amt, 'SELL')
+            goog_order.m_training_stop_percent = 0.1  
+            goog_order.m_account = 'DU1531456'
+            orders.append(d)
             # Use the connection to the send the order to IB
             tws_conn.placeOrder(order_id, goog_contract, goog_order)
+            oid = oid + 1
+    for d in adja:
+        if d not in orders:
+            # Create an order ID which is 'global' for this session. This
+            # will need incrementing once new orders are submitted.
+            order_id = oid
+
+            # Create a contract in GOOG stock via SMART order routing
+            goog_contract = create_contract(d.split(':')[0], 'STK', 'SMART', 'SMART', 'USD')
+            yahoo_financials = YahooFinancials(d.split(':')[0])
+            p = yahoo_financials.get_stock_price_data()
+            
+
+            p= (p[d.split(':')[0]]['regularMarketPrice'])
+            # Go long 100 shares of Google
+            amt = int(float(cashbal)) / 1000 / p
+            amt = int(amt)
+            goog_order = create_order('TRAIL', amt, 'BUY')
+            goog_order.m_training_stop_percent = 0.1  
+            goog_order.m_account = 'DU1531456'
+            orders.append(d)
+            # Use the connection to the send the order to IB
+            tws_conn.placeOrder(order_id, goog_contract, goog_order)
+            oid = oid + 1
     time.sleep(60*4)
