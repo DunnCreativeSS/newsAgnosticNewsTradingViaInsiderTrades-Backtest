@@ -14,6 +14,17 @@ from datetime import datetime
 from ib.ext.Contract import Contract
 from ib.ext.Order import Order
 cashbal = 0
+netliq = 0
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+
+# If modifying these scopes, delete the file token.pickle.
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+
+
+SAMPLE_SPREADSHEET_ID = '1lty76K58tiFL0f00V2jXGtCqgJLc7O7vMKa4-4tPSTE'
+
 from ib.opt import Connection, message
 def error_handler(msg):
     """Handles the capturing of error messages"""
@@ -21,15 +32,27 @@ def error_handler(msg):
 oid = 0
 def reply_handler(msg):
     global oid
+    global netliq
     global cashbal
     """Handles of server replies"""
-    if msg.typeName == 'accountSummary' and msg.account == 'DUC00074' and msg.tag == 'CashBalance':
+    
+    if msg.typeName == 'accountSummary' and msg.account == 'DU1385020' and msg.tag == 'NetLiquidationByCurrency':
+        netliq = (msg.value)
+        print(netliq)
+        
+        perc = ((float(netliq) / 1396001.4524) - 1  ) * 100
+        print ('percent change!!')
+        print (perc)
+        
+        row = [str(datetime.now()), (perc)]
+        wks.append_row(row)
+    if msg.typeName == 'accountSummary' and msg.account == 'DU1385020' and msg.tag == 'CashBalance':
         cashbal = (msg.value)
     if msg.typeName == 'nextValidId':
         oid = msg.orderId
         print ('oid')
         print (oid)
-    print ("Server Response: %s, %s" % (msg.typeName, msg))
+    #print ("Server Response: %s, %s" % (msg.typeName, msg))
 def create_contract(symbol, sec_type, exch, prim_exch, curr):
     """Create a Contract object defining what will
     be purchased, at which exchange and in which currency.
@@ -83,8 +106,30 @@ tws_conn.register(acct_update,
              message.updateAccountValue,
              message.updateAccountTime,
              message.updatePortfolio)
-             
-             
+          
+orders = ['CPST:2019-06-14',  'NFBK:2019-06-13', 'CHFC:2019-06-13']   
+times = 120  
+perc = ((float(netliq) / 1396001.4524) - 1  ) * 100
+print ('percent change!!')
+print (perc)
+times = times + 1
+creds = None
+# The file token.pickle stores the user's access and refresh tokens, and is
+# created automatically when the authorization flow completes for the first
+# time.
+import os
+import pickle
+scope = ['https://spreadsheets.google.com/feeds',
+         'https://www.googleapis.com/auth/drive']
+
+creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+
+gc = gspread.authorize(creds)
+
+# Call the Sheets API
+wks = gc.open_by_key('1lty76K58tiFL0f00V2jXGtCqgJLc7O7vMKa4-4tPSTE').sheet1
+
+
 while True:
     tws_conn.reqAccountSummary(True, 'All', '$LEDGER')
 
@@ -101,7 +146,7 @@ while True:
     # BDay is business day, not birthday...
     from pandas.tseries.offsets import BDay
 
-    # pd.datetime is an alias for datetime.datetime
+    # pd.datetime is an alias for datetime
     today = pd.datetime.today()
     bday2 = today - BDay(2)
     today = today.strftime('%m-%d-%Y')
@@ -199,63 +244,73 @@ while True:
             done.append(a)
     print(done)
     print(oid)
-    orders = []
     tick = 0
     from yahoofinancials import YahooFinancials
-    for d in adjd:
-        if d not in orders:
-            # Create an order ID which is 'global' for this session. This
-            # will need incrementing once new orders are submitted.
-            order_id = oid
+    if times > 120:
+        times = 0
+        for d in adjd:
+            if d not in orders:
+                # Create an order ID which is 'global' for this session. This
+                # will need incrementing once new orders are submitted.
+                order_id = oid
 
-            # Create a contract in GOOG stock via SMART order routing
-            goog_contract = create_contract(d.split(':')[0], 'STK', 'SMART', 'SMART', 'USD')
-            yahoo_financials = YahooFinancials(d.split(':')[0])
-            p = yahoo_financials.get_stock_price_data()
-            
+                # Create a contract in GOOG stock via SMART order routing
+                goog_contract = create_contract(d.split(':')[0], 'STK', 'SMART', 'SMART', 'USD')
+                yahoo_financials = YahooFinancials(d.split(':')[0])
+                p = yahoo_financials.get_stock_price_data()
+                
 
-            p= (p[d.split(':')[0]]['regularMarketPrice'])
-            # Go long 100 shares of Google
-            amt = int(float(cashbal)) / 1000 / p
-            amt = int(amt)
-            goog_order = create_order('MKT', amt, 'BUY')
-            goog_order.m_account = 'DU1531456'
-            tws_conn.placeOrder(order_id, goog_contract, goog_order)
-            oid = oid + 1
-            order_id = order_id + 1
-            goog_order2 = create_order('TRAIL', amt, 'SELL')
-            goog_order2.m_trailing_stop_percent = 0.1  
-            goog_order2.m_account = 'DU1531456'
-            tws_conn.placeOrder(order_id, goog_contract, goog_order2)
-            orders.append(d)
-            # Use the connection to the send the order to IB
-            oid = oid + 1
-    for d in adja:
-        if d not in orders:
-            # Create an order ID which is 'global' for this session. This
-            # will need incrementing once new orders are submitted.
-            order_id = oid
+                p= (p[d.split(':')[0]]['regularMarketPrice'])
+                # Go long 100 shares of Google
+                amt = int(float(cashbal)) / 100 / p
+                amt = int(amt)
+                goog_order = create_order('MKT', amt, 'BUY')
+                goog_order.m_account = 'DU1385020'
+                goog_order.m_tif = 'GTC'
+                tws_conn.placeOrder(order_id, goog_contract, goog_order)
+                oid = oid + 1
+                order_id = order_id + 1
+                
+                goog_order2 = create_order('TRAIL', amt, 'SELL')
+                goog_order2.m_trailingPercent = 5
+                goog_order2.m_account = 'DU1385020'
+                goog_order2.m_tif = 'GTC'
+                tws_conn.placeOrder(order_id, goog_contract, goog_order2)
+                orders.append(d)
+                # Use the connection to the send the order to IB
+                oid = oid + 1
+        for d in adja:
+            if d not in orders:
+                # Create an order ID which is 'global' for this session. This
+                # will need incrementing once new orders are submitted.
+                order_id = oid
 
-            # Create a contract in GOOG stock via SMART order routing
-            goog_contract = create_contract(d.split(':')[0], 'STK', 'SMART', 'SMART', 'USD')
-            yahoo_financials = YahooFinancials(d.split(':')[0])
-            p = yahoo_financials.get_stock_price_data()
-            
+                # Create a contract in GOOG stock via SMART order routing
+                goog_contract = create_contract(d.split(':')[0], 'STK', 'SMART', 'SMART', 'USD')
+                yahoo_financials = YahooFinancials(d.split(':')[0])
+                p = yahoo_financials.get_stock_price_data()
+                
 
-            p= (p[d.split(':')[0]]['regularMarketPrice'])
-            # Go long 100 shares of Google
-            amt = int(float(cashbal)) / 1000 / p
-            amt = int(amt)
-            goog_order = create_order('MKT', amt, 'SELL')
-            goog_order.m_account = 'DU1531456'
-            tws_conn.placeOrder(order_id, goog_contract, goog_order)
-            oid = oid + 1
-            order_id = order_id + 1
-            goog_order2 = create_order('TRAIL', amt, 'BUY')
-            goog_order2.m_trailing_stop_percent = 0.1  
-            goog_order2.m_account = 'DU1531456'
-            tws_conn.placeOrder(order_id, goog_contract, goog_order2)
-            orders.append(d)
-            # Use the connection to the send the order to IB
-            oid = oid + 1
-    time.sleep(60*4)
+                p= (p[d.split(':')[0]]['regularMarketPrice'])
+                # Go long 100 shares of Google
+                amt = int(float(cashbal)) / 100 / p
+                amt = int(amt)
+                goog_order = create_order('MKT', amt, 'SELL')
+                goog_order.m_tif = 'GTC'
+                goog_order.m_account = 'DU1385020'
+                tws_conn.placeOrder(order_id, goog_contract, goog_order)
+                oid = oid + 1
+                order_id = order_id + 1
+                goog_order2 = create_order('TRAIL', amt, 'BUY')
+                goog_order2.m_tif = 'GTC'
+                goog_order2.m_trailingPercent = 5  
+                goog_order2.m_account = 'DU1385020'
+                tws_conn.placeOrder(order_id, goog_contract, goog_order2)
+                orders.append(d)
+                # Use the connection to the send the order to IB
+                oid = oid + 1
+    
+    times = times + 1   
+
+
+    time.sleep(60 * 5)
