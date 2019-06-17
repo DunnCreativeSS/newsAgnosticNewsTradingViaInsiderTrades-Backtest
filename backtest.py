@@ -11,7 +11,17 @@ import backtrader as bt
 import backtrader
 import math
 from datetime import datetime
+class CommInfo_CFD(bt.CommInfoBase):
+    params = (('stocklike', True), ('commtype', bt.CommInfoBase.COMM_FIXED),)
 
+    def _getcommission(self, size, price, pseudoexec):
+        return self.p.commission
+                
+cerebro = bt.Cerebro()
+cerebro.broker.setcash(10000.0)
+comminfo = CommInfo_CFD(commission=9.95) # 1$
+
+cerebro.broker.addcommissioninfo(comminfo)
 
 URL = "http://www.insider-sleuth.com/insider/screener"
 session = requests.session()
@@ -144,13 +154,7 @@ class Strategy(bt.SignalStrategy):
                                 self.trades = self.trades + 9.95*0.075
                                 print(self.trades)
                                 self.sell(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.05)
-class CommInfo_CFD(bt.CommInfoBase):
-    params = (('stocklike', True), ('commtype', bt.CommInfoBase.COMM_FIXED),)
 
-    def _getcommission(self, size, price, pseudoexec):
-        return self.p.commission
-                
-cerebro = bt.Cerebro()
 cerebro.addstrategy(Strategy)
 cerebro.addsizer(maxRiskSizer, risk=0.05)
 
@@ -169,10 +173,6 @@ for d in done:
 for d in datadata:
     cerebro.adddata(datadata[d])
     datadata[d].plotinfo.plot = False
-cerebro.broker.setcash(10000.0)
-comminfo = CommInfo_CFD(commission=9.95) # 1$
-
-cerebro.addcommissioninfo(comminfo)
 
 start = cerebro.broker.getvalue()
 start2 = cerebro.broker.getcash()
