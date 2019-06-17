@@ -121,6 +121,7 @@ class maxRiskSizer(bt.Sizer):
 class Strategy(bt.SignalStrategy):
     def __init__(self):
         self.index = 0
+        self.trades = 0
     def next(self):
         self.index = self.index + 1
         if self.index > 0:
@@ -134,14 +135,14 @@ class Strategy(bt.SignalStrategy):
                     for a in adja:
                         if a.split(':')[0] == da:
                             if curdate == a.split(':')[1]:
-                                print(adja[a]['c'])
-                                print(((float(cerebro.broker.getvalue()) /100)/(float(adja[a]['c'])*float(adja[a]['price']))/(1/float(adja[a]['c']))) * float(adja[a]['c']))
+                                self.trades = self.trades + 9.95*0.075
+                                print(self.trades)
                                 self.buy(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.05)
                     for d in adjd:
                         if d.split(':')[0] == da:
                             if curdate == d.split(':')[1]:
-                                print(adjd[d]['c'])
-                                print(((float(cerebro.broker.getvalue()) / 100)/(float(adjd[d]['c'])*float(adjd[d]['price']))/(1/float(adjd[d]['c']))) * float(adjd[d]['c']))
+                                self.trades = self.trades + 9.95*0.075
+                                print(self.trades)
                                 self.sell(data=self.getdatabyname(da), exectype=backtrader.Order.StopTrail, trailpercent=0.05)
                 
 cerebro = bt.Cerebro()
@@ -157,13 +158,18 @@ for a in adja:
         done.append(a)
 datadata = {}
 for d in done:
-    datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2017, 1, 1),
+    datadata[d] = bt.feeds.YahooFinanceData(dataname=d.split(':')[0], fromdate=datetime(2018, 4, 1),
                                   todate=datetime(2019, 5, 31))
+                                  
 for d in datadata:
     cerebro.adddata(datadata[d])
+    datadata[d].plotinfo.plot = False
 cerebro.broker.setcash(10000.0)
 start = cerebro.broker.getvalue()
+cerebro.addobservermulti(bt.observers.BuySell)
+
 cerebro.run()
 print('Start portfolio value: %.2f' % start)
 print('Final Portfolio Value: %.2f' % cerebro.broker.getvalue())
 
+cerebro.plot()
