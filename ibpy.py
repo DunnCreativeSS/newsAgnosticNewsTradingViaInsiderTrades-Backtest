@@ -218,12 +218,17 @@ while True:
             # Go long 100 shares of Google
             amt = int(float(cashbal)) / 1000 / p
             amt = int(amt)
-            goog_order = create_order('TRAIL', amt, 'SELL')
-            goog_order.m_training_stop_percent = 0.1  
+            goog_order = create_order('MKT', amt, 'BUY')
             goog_order.m_account = 'DU1531456'
+            tws_conn.placeOrder(order_id, goog_contract, goog_order)
+            oid = oid + 1
+            order_id = order_id + 1
+            goog_order2 = create_order('TRAIL', amt, 'SELL')
+            goog_order2.m_trailing_stop_percent = 0.1  
+            goog_order2.m_account = 'DU1531456'
+            tws_conn.placeOrder(order_id, goog_contract, goog_order2)
             orders.append(d)
             # Use the connection to the send the order to IB
-            tws_conn.placeOrder(order_id, goog_contract, goog_order)
             oid = oid + 1
     for d in adja:
         if d not in orders:
@@ -241,11 +246,16 @@ while True:
             # Go long 100 shares of Google
             amt = int(float(cashbal)) / 1000 / p
             amt = int(amt)
-            goog_order = create_order('TRAIL', amt, 'BUY')
-            goog_order.m_training_stop_percent = 0.1  
+            goog_order = create_order('MKT', amt, 'SELL')
             goog_order.m_account = 'DU1531456'
+            tws_conn.placeOrder(order_id, goog_contract, goog_order)
+            oid = oid + 1
+            order_id = order_id + 1
+            goog_order2 = create_order('TRAIL', amt, 'BUY')
+            goog_order2.m_trailing_stop_percent = 0.1  
+            goog_order2.m_account = 'DU1531456'
+            tws_conn.placeOrder(order_id, goog_contract, goog_order2)
             orders.append(d)
             # Use the connection to the send the order to IB
-            tws_conn.placeOrder(order_id, goog_contract, goog_order)
             oid = oid + 1
     time.sleep(60*4)
