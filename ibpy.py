@@ -34,6 +34,8 @@ def reply_handler(msg):
     global oid
     global netliq
     global cashbal
+    global boughts
+    global solds
     """Handles of server replies"""
     
     if msg.typeName == 'accountSummary' and msg.account == 'DU1385020' and msg.tag == 'NetLiquidationByCurrency':
@@ -43,8 +45,30 @@ def reply_handler(msg):
         perc = ((float(netliq) / 1396001.4524) - 1  ) * 100
         print ('percent change!!')
         print (perc)
+        scope = ['https://spreadsheets.google.com/feeds',
+         'https://www.googleapis.com/auth/drive']
+
+        creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
+
+        gc = gspread.authorize(creds)
+
+        # Call the Sheets API
+        wks = gc.open_by_key('1lty76K58tiFL0f00V2jXGtCqgJLc7O7vMKa4-4tPSTE').sheet1
+        if len(boughts) != 0:
+            bought = ""
+            for b in boughts:
+                bought = bought + b + ","
+            row = [str(datetime.now()), (perc), bought]
+            boughts = []
+        elif len(solds) != 0:
         
-        row = [str(datetime.now()), (perc)]
+            sold = ""
+            for b in solds:
+                sold = sold + b + ","
+            row = [str(datetime.now()), (perc), "", sold]
+            solds = []
+        else:
+            row = [str(datetime.now()), (perc)]
         wks.append_row(row)
     if msg.typeName == 'accountSummary' and msg.account == 'DU1385020' and msg.tag == 'CashBalance':
         cashbal = (msg.value)
@@ -107,7 +131,7 @@ tws_conn.register(acct_update,
              message.updateAccountTime,
              message.updatePortfolio)
           
-orders = ['CPST:2019-06-14',  'NFBK:2019-06-13', 'CHFC:2019-06-13']   
+orders = ['CPST:2019-06-14', 'TYME:2019-06-14', 'GPN:2019-06-14']#, 'ARNA:2019-06-14'
 times = 120  
 perc = ((float(netliq) / 1396001.4524) - 1  ) * 100
 print ('percent change!!')
@@ -119,17 +143,8 @@ creds = None
 # time.
 import os
 import pickle
-scope = ['https://spreadsheets.google.com/feeds',
-         'https://www.googleapis.com/auth/drive']
-
-creds = ServiceAccountCredentials.from_json_keyfile_name('credentials.json', scope)
-
-gc = gspread.authorize(creds)
-
-# Call the Sheets API
-wks = gc.open_by_key('1lty76K58tiFL0f00V2jXGtCqgJLc7O7vMKa4-4tPSTE').sheet1
-
-
+boughts = []
+solds = []
 while True:
     tws_conn.reqAccountSummary(True, 'All', '$LEDGER')
 
@@ -270,6 +285,7 @@ while True:
                 tws_conn.placeOrder(order_id, goog_contract, goog_order)
                 oid = oid + 1
                 order_id = order_id + 1
+                boughts.append(d.split(':')[0])
                 
                 goog_order2 = create_order('TRAIL', amt, 'SELL')
                 goog_order2.m_trailingPercent = 5
@@ -306,6 +322,7 @@ while True:
                 goog_order2.m_trailingPercent = 5  
                 goog_order2.m_account = 'DU1385020'
                 tws_conn.placeOrder(order_id, goog_contract, goog_order2)
+                solds.append(d.split(':')[0])
                 orders.append(d)
                 # Use the connection to the send the order to IB
                 oid = oid + 1
