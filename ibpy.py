@@ -58,14 +58,14 @@ def reply_handler(msg):
             bought = ""
             for b in boughts:
                 bought = bought + b + ","
-            row = [str(datetime.now()), (perc), bought]
+            row = [str(datetime.now()), (perc), str(datetime.now())]
             boughts = []
         elif len(solds) != 0:
         
             sold = ""
             for b in solds:
                 sold = sold + b + ","
-            row = [str(datetime.now()), (perc), "", sold]
+            row = [str(datetime.now()), (perc), "", str(datetime.now())]
             solds = []
         else:
             row = [str(datetime.now()), (perc)]
