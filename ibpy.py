@@ -17,19 +17,43 @@ cashbal = 0
 netliq = 0
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-orders = ['VRNT:2019-06-17', 'CARB:2019-06-17']#[]##'CPST:2019-06-14', 'VERI:2019-06-14', 'TYME:2019-06-14', 'GPN:2019-06-14', 'ARNA:2019-06-14', 'PRTS:2019-06-14', #['CPST:2019-06-14', 'TYME:2019-06-14', 'GPN:2019-06-14', 'ARNA:2019-06-14']#, 'ARNA:2019-06-14'
+orders2 = []
 with open('orders.txt') as f:
-    orders = f.read().splitlines()
-
+    orders2 = f.read().splitlines()
+ocount = 0
+import calendar
+from datetime import datetime, timedelta
+def add_months(sourcedate,months):
+    month = sourcedate.month - 1 + months
+    year = sourcedate.year + month / 12
+    month = month % 12 + 1 - 1
+    month = int(month)
+    year = int(year)
+    day = min(sourcedate.day,calendar.monthrange(year,month)[1])
+    return datetime.date(datetime(year,month,day))
+from pandas.tseries.offsets import BDay
+orders = []
+for o in orders2:
+    print(ocount)
+    
+    past = datetime.now() - timedelta(days=2)
+    # pd.datetime is an alias for datetime
+    x=(orders2[ocount].split(':')[2])
+    past = datetime.date(past)
+    x = add_months(datetime(*[int(item) for item in x.split('-')]), 1)
+    if x > past:
+        print(past)
+        print(x)
+        orders.append(orders2[ocount].split(':')[0] + ':' +  orders2[ocount].split(':')[1])
+    ocount = ocount + 1
 print(orders)
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
-# h3xh3xh32
-# j4r3rr5p
+# jar138du
 
-# DU1385018
+# DU1531456
 SAMPLE_SPREADSHEET_ID = '1lty76K58tiFL0f00V2jXGtCqgJLc7O7vMKa4-4tPSTE'
 
 from ib.opt import Connection, message
@@ -45,11 +69,11 @@ def reply_handler(msg):
     global solds
     """Handles of server replies"""
     
-    if msg.typeName == 'accountSummary' and msg.account == 'DU1385018' and msg.tag == 'NetLiquidationByCurrency':
+    if msg.typeName == 'accountSummary' and msg.account == 'DU1531456' and msg.tag == 'NetLiquidationByCurrency':
         netliq = (msg.value)
         print(netliq)
         
-        perc = ((float(netliq) / 1335999) - 1  ) * 100
+        perc = ((float(netliq) / 1000052) - 1  ) * 100
         print ('percent change!!')
         print (perc)
         scope = ['https://spreadsheets.google.com/feeds',
@@ -77,7 +101,7 @@ def reply_handler(msg):
         else:
             row = [(datetime.now().strftime('%d-%m-%y %H:%M:%S')), (perc)]
         wks.append_row(row)
-    if msg.typeName == 'accountSummary' and msg.account == 'DU1385018' and msg.tag == 'CashBalance':
+    if msg.typeName == 'accountSummary' and msg.account == 'DU1531456' and msg.tag == 'CashBalance':
         cashbal = (msg.value)
     if msg.typeName == 'nextValidId':
         oid = msg.orderId
@@ -205,57 +229,74 @@ while True:
         done = []
         adja = {}
         adjd = {}
+        sym = {}
+        value = {}
+        aord = {}
+        price = {}
         for day, group in agg:
             #this simple save the data
             datep =  str(day)
             filename = '%s_%s.csv' % (dfile.replace('.csv', ''), datep)
             group.to_csv(filename, sep=',', quotechar='"', encoding='latin-1', index=False, header=True)
             dfs[filename] = pd.read_csv(filename) 
-            sym = dfs[filename]['Issuer Trading Symbol'].values
-            value = dfs[filename]['Value Transacted'].values
-            aord = dfs[filename]['Acquired Disposed Code'].values
-            price = dfs[filename]["Price per Share"].values
+            sym[str(day)] = dfs[filename]['Issuer Trading Symbol'].values
+            value[str(day)] = dfs[filename]['Value Transacted'].values
+            aord[str(day)] = dfs[filename]['Acquired Disposed Code'].values
+            price[str(day)] = dfs[filename]["Price per Share"].values
             acquired = {}
             disposed = {}
-            count = 0
-            for s in sym:
+        for day in sym:
+            for s in sym[day]:
                 if s != 'DHCP'  and s != 'GXP'and s != 'LBC'  and s != 'FMSA'and s != 'COTV'and s != 'OMED' and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
-
-                    acquired[s + ':' + datep] = {'v': 0, 'c': 0}
-                    disposed[s + ':' + datep] = {'v': 0, 'c': 0}
-            for s in sym:
+                   
+                    acquired[s] = {'v': 0, 'c': 0}
+                    disposed[s] = {'v': 0, 'c': 0}
+        for day in sym:
+            count = 0
+            
+            for s in sym[day]:
                 if s != 'DHCP' and s != 'GXP' and s != 'LBC' and s != 'FMSA'and s != 'COTV'and s != 'OMED' and s !='ANCX'and s !='CCT'and s != 'HEI, HEI.A'and s !=  'IDTI' and s != 'P' and s != 'TSRO'and s != 'IVTY'and s != 'FMI'and s != 'ECYT' and  s != 'BLMT' and  s != 'ipas' and  s != '(CALX)' and  s != '(SIRI)' and  s != 'QTM' and  s != 'IMDZ':
-
-                    if aord[count] == "A":
-                        if float(value[count]) is not 0:
-                            acquired[s + ':' + datep] = {'price': price[count], 'c':  acquired[s + ':' + datep]['c'] + 1, 'v': acquired[s + ':' + datep]['v'] + float(value[count])}
-                    else:
-                        if float(value[count]) is not 0:
-                            disposed[s + ':' + datep] = {'price': price[count], 'c':  disposed[s + ':' + datep]['c'] + 1,  'v': disposed[s + ':' + datep]['v'] + float(value[count])}
-            count = count + 1
-            ta = 0
-            ca = 0
-            td = 0
-            cd = 0
-            for a in acquired:
-                ta = ta + acquired[a]['v']
-                ca = ca + 1
-            for d in disposed:
-                td = td + disposed[d]['v']
-                cd = cd + 1
-            aa = ta / ca
-            ad = td / cd 
-            for a in acquired:
-                if acquired[a]['v'] > aa * 3 and acquired[a]['c'] > 1:
-                    adja[a] = {'price': acquired[a]['price'], 'c': acquired[a]['c'], 'v': acquired[a]['v']}
                     
-            for d in disposed:
-                if disposed[d]['v'] > ad * 3 and disposed[d]['c'] > 1:
-                    adjd[d] = {'price': disposed[d]['price'],'c': disposed[d]['c'], 'v': disposed[d]['v']}
+                    if aord[day][count] == "A":
+                        acquired[s] = {'date': datep, 'price': price[day][count], 'c':  acquired[s]['c'] + 1, 'v': acquired[s]['v'] + float(value[day][count])}
+                        
+                        if s == 'OPK':
+                            print('OPK')
+                            print(acquired[s])
+                    else:
+                        disposed[s] = {'date': datep, 'price': price[day][count], 'c':  disposed[s]['c'] + 1,  'v': disposed[s]['v'] + float(value[day][count])}
+                count = count + 1
+        ta = 0
+        ca = 0
+        td = 0
+        cd = 0
+        for a in acquired:
+            ta = ta + acquired[a]['v']
+            ca = ca + 1
+        for d in disposed:
+            td = td + disposed[d]['v']
+            cd = cd + 1
+        aa = ta / ca
+        ad = td / cd 
+        print(ad)
+        print(aa)
+        for a in acquired:
+            if acquired[a]['v'] > aa * 6 or acquired[a]['c'] > 2:
+                print(acquired[a])
+                if (a) == 'OPK':
+                    print ('ack opk')
+                adja[a] = {'date': acquired[a]['date'], 'price': acquired[a]['price'], 'c': acquired[a]['c'], 'v': acquired[a]['v']}
+                
+        for d in disposed:
+            if disposed[d]['v'] > ad * 6 or disposed[d]['c'] > 2:
+                print(disposed[d])
+                adjd[d] = {'date': disposed[a]['date'], 'price': disposed[d]['price'],'c': disposed[d]['c'], 'v': disposed[d]['v']}
+        print (adjd)
+        print (adja)
         for a in adja:
-            print(adja[a]['c'])
+            print(adja[a]['v'])
         for d in adjd:
-            print(str(adjd[d]['c']))
+            print(str(adjd[d]['v']))
 
 
         for d in adjd:
@@ -268,11 +309,16 @@ while True:
         print(done)
         print(oid)
         tick = 0
+        print (adjd)
+        print (adja)
         from yahoofinancials import YahooFinancials
-        if times > 0:#600:
+        if times >= 0:#600:
             times = 0
+                
             for d in adjd:
                 if d + ':' + str(adjd[d]['c']) not in orders:
+                    print('adjd')
+                    print(adjd)
                     # Create an order ID which is 'global' for this session. This
                     # will need incrementing once new orders are submitted.
                     order_id = oid
@@ -286,10 +332,10 @@ while True:
                     p= (p[d.split(':')[0]]['regularMarketPrice'])
                     # Go long 100 shares of Google
                     amt = int(float(cashbal)) / 200 / p
-                    amt = amt * int(str(adja[d]['c']))
+                    amt = amt * int(str(adjd[d]['c']))
                     amt = int(amt)
                     goog_order = create_order('MKT', amt, 'BUY')
-                    goog_order.m_account = 'DU1385018'
+                    goog_order.m_account = 'DU1531456'
                     goog_order.m_tif = 'GTC'
                     tws_conn.placeOrder(order_id, goog_contract, goog_order)
                     oid = oid + 1
@@ -298,10 +344,10 @@ while True:
                     
                     goog_order2 = create_order('TRAIL', amt, 'SELL')
                     goog_order2.m_trailingPercent = 5
-                    goog_order2.m_account = 'DU1385018'
+                    goog_order2.m_account = 'DU1531456'
                     goog_order2.m_tif = 'GTC'
                     tws_conn.placeOrder(order_id, goog_contract, goog_order2)
-                    orders.append(d + ':' + str(adjd[d]['c']))
+                    orders.append(d + ':' + str(adjd[d]['c']) + ':' + str(adjd[d]['date']))
                     with open('orders.txt', 'w') as f:
                         for item in orders:
                             f.write("%s\n" % item)
@@ -310,6 +356,8 @@ while True:
                     oid = oid + 1
             for d in adja:
                 if d + ':' + str(adja[d]['c']) not in orders:
+                    print('adja')
+                    print(adja)
                     # Create an order ID which is 'global' for this session. This
                     # will need incrementing once new orders are submitted.
                     order_id = oid
@@ -327,25 +375,24 @@ while True:
                     amt = int(amt)
                     goog_order = create_order('MKT', amt, 'SELL')
                     goog_order.m_tif = 'GTC'
-                    goog_order.m_account = 'DU1385018'
+                    goog_order.m_account = 'DU1531456'
                     tws_conn.placeOrder(order_id, goog_contract, goog_order)
                     oid = oid + 1
                     order_id = order_id + 1
                     goog_order2 = create_order('TRAIL', amt, 'BUY')
                     goog_order2.m_tif = 'GTC'
                     goog_order2.m_trailingPercent = 5  
-                    goog_order2.m_account = 'DU1385018'
+                    goog_order2.m_account = 'DU1531456'
                     tws_conn.placeOrder(order_id, goog_contract, goog_order2)
                     solds.append(d.split(':')[0])
-                    orders.append(d + ':' + str(adja[d]['c']))
+                    orders.append(d + ':' + str(adja[d]['c']) + ':' + str(adja[d]['date']))
                     with open('orders.txt', 'w') as f:
                         for item in orders:
                             f.write("%s\n" % item)
                     # Use the connection to the send the order to IB
                     oid = oid + 1
-        
+    except Exception as e:  
+        print (e)
         times = times + 1   
-    except Exception as e:
-        print(e)
 
     time.sleep(60 * 15)
